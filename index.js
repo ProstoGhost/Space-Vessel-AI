@@ -47,8 +47,12 @@ const start = () => {
         const msgid = msg.message.message_id;
         //bot.sendMessage(chatId, `You choice: ${data}`)
         if(data === '/again'){
-            bot.deleteMessage(chatId, msgid);
+            await bot.deleteMessage(chatId, msgid);
             return startGame(chatId, msgid);
+        }
+        if(data === '/stop'){
+            await bot.deleteMessage(chatId, msgid);
+            return bot.sendMessage(chatId, 'Хорошо, давай пока закончим на этом');
         }
         if(data == chats[chatId]){
             return bot.editMessageText(`Ты угадал число которое я загадал: ${chats[chatId]}`,{
