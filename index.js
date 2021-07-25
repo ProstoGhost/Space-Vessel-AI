@@ -12,7 +12,8 @@ const {gameOption, againOption} = require('./options')
 const startGame = async (chatId, msgid) => {
     const randomNumber = Math.floor(Math.random() * 10)
     chats[chatId] = randomNumber;
-    await bot.sendMessage(chatId, 'попробуй угадай число которое я загадал, оно от 0 до 9', gameOption)
+    await bot.deleteMessage(chatId, msgid)
+    return bot.sendMessage(chatId, 'попробуй угадай число которое я загадал, оно от 0 до 9', gameOption)
     //return bot.sendMessage(chatId, 'пробуй', gameOption)
 }
 
