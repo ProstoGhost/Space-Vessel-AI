@@ -1,11 +1,18 @@
 const TelegramAPI = require('node-telegram-bot-api');
 const ENV = require('dotenv').config();
+const mongoose = require('mongoose');
+
+mongoose.connect("mongodb://localhost:27017/Telegram",{
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
+
+const Profile = require('./src/Profile')
+
+//const token = process.env.TOKEN
 
 
-const token = process.env.TOKEN
-
-
-const bot = new TelegramAPI(token,{polling: true})
+const bot = new TelegramAPI(process.env.TOKEN,{polling: true})
 const chats = {}
 const boss = {}
 const game = {}
@@ -16,7 +23,7 @@ const startGame = async (chatId, msgid) => {
     const randomNumber = Math.floor(Math.random() * 10)
     chats[chatId] = randomNumber;
     game[chatId] = 1
-    await bot.deleteMessage(chatId, msgid);
+    //await bot.deleteMessage(chatId, msgid);
     return bot.sendMessage(chatId, 'попробуй угадай число которое я загадал, оно от 0 до 9', gameOption)
     //return bot.sendMessage(chatId, 'пробуй', gameOption)
 }
@@ -24,7 +31,7 @@ const BossFight = async (chatId, msgid) => {
     const BossHP = Random(10, 15);
     boss[chatId] = BossHP;
     game[chatId] = 2
-    await bot.deleteMessage(chatId, msgid);
+    //await bot.deleteMessage(chatId, msgid);
     return bot.sendMessage(chatId, `Попробуй завалить босса качалки(Его ХП - ${boss[chatId]})`, KeyboardgameOption);
 }
 function Random(min, max){
@@ -52,12 +59,12 @@ const start = () => {
             return bot.sendMessage(chatId, `Это бот который поможет тебе скрасить немного времени и он достаточно прост для освоения`)
         }
         if(text === '/game'){
-            await startGame(chatId, msgid);
-            return bot.deleteMessage(chatId, msgid);
+            return startGame(chatId, msgid);
+            //return bot.deleteMessage(chatId, msgid);
         }
         if(text === '/boss'){
-            await BossFight(chatId, msgid);
-            return bot.deleteMessage(chatId, msgid);
+            return BossFight(chatId, msgid);
+            //return bot.deleteMessage(chatId, msgid);
         }
 /*         if(text === 'Отступить'){
             await bot.deleteMessage(chatId, msgid);
@@ -83,11 +90,11 @@ const start = () => {
             if(game[chatId] === 2){
                 return BossFight(chatId, msgid);
             }
-            return bot.deleteMessage(chatId, msgid);
+            //return bot.deleteMessage(chatId, msgid);
         }
         if(data === '/stop'){
             game[chatId] = 0;
-            await bot.deleteMessage(chatId, msgid);
+            //await bot.deleteMessage(chatId, msgid);
             return bot.sendMessage(chatId, 'Хорошо, давай пока закончим на этом');
         }
         if(data == chats[chatId]){
@@ -105,14 +112,57 @@ const start = () => {
             })
         }
         if(data === '/hit' & game[chatId] === 2){
-            await bot.deleteMessage(chatId, msgid);
-            hit[chatId] = Random(9, 16)
+            //await bot.deleteMessage(chatId, msgid);
+            await Profile.findOne(
+                {ID : chatId},
+
+                async(err, data) =>{
+                    if(err) console.log(err);
+                    if(!data){
+                        let nu = new Profile({
+                            ID: chatId,
+                            HP: 10,
+                            XP: 0,
+                            Weapon: 'EL Glock 220W',
+                            Killcount: 0
+                        });
+                        await nu.save(function (err) {
+                            if (err) return console.error(err);
+                        });
+                        hit[chatId] = Random(9, 16)
+                        if(hit[chatId] >= boss[chatId]){
+                            data.XP += Random(10,21);
+                            data.Killcount += 1;
+                            await data.save();
+                            return bot.sendMessage(chatId, `Чел, ты его грохнул! Твой удар снёс ему: ${hit[chatId]}ХП`, againOption);
+                        }
+                        if(hit[chatId] < boss[chatId]){
+                            await data.save();
+                            return bot.sendMessage(chatId, `Ты умер Босс выжил после твоей тычки в ${hit[chatId]}ХП`, againOption);
+                        }
+                    }
+                    else{
+                        hit[chatId] = Random(9, 16)
+                        if(hit[chatId] >= boss[chatId]){
+                            data.XP += Random(10,21);
+                            data.Killcount += 1;
+                            await data.save();
+                            return bot.sendMessage(chatId, `Чел, ты его грохнул! Твой удар снёс ему: ${hit[chatId]}ХП`, againOption);
+                        }
+                        if(hit[chatId] < boss[chatId]){
+                            await data.save();
+                            return bot.sendMessage(chatId, `Ты умер Босс выжил после твоей тычки в ${hit[chatId]}ХП`, againOption);
+                        }
+                    }
+                }
+            ).clone().catch(function(err){ console.log(err)})
+/*             hit[chatId] = Random(9, 16)
             if(hit[chatId] >= boss[chatId]){
                 return bot.sendMessage(chatId, `Чел, ты его грохнул! Твой удар снёс ему: ${hit[chatId]}ХП`, againOption);
-            }
-            if(hit[chatId] < boss[chatId]){
+            } */
+/*             if(hit[chatId] < boss[chatId]){
                 return bot.sendMessage(chatId, `Ты умер Босс выжил после твоей тычки в ${hit[chatId]}ХП`, againOption);
-            }
+            } */
         }
     })
 }
