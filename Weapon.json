@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "Name": "EL Glock 220W",
+        "damage": 1.5
+    },
+    {
+        "id": 2,
+        "Name": "AK DC-105A",
+        "damage": 1.7
+    }
+]
