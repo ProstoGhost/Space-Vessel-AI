@@ -8,6 +8,7 @@ mongoose.connect("mongodb://localhost:27017/Telegram",{
 });
 
 const Profile = require('./src/Profile')
+const Arsenal = require('./Weapon.json');
 
 
 const bot = new TelegramAPI(process.env.TOKEN,{polling: true})
@@ -16,6 +17,7 @@ const boss = {}
 const game = {}
 const hit = {}
 const weapon = {}
+const dmg = {}
 const {gameOption, againOption, KeyboardgameOption} = require('./options')
 
 const startGame = async (chatId, msgid) => {
@@ -29,11 +31,17 @@ const startGame = async (chatId, msgid) => {
 const BossFight = async (chatId, msgid) => {
     boss[chatId] = Random(10, 15);
     game[chatId] = 2
+    dmg[chatId] = CalculateDMG(10, weapon[chatId])
     //await bot.deleteMessage(chatId, msgid);
-    return bot.sendMessage(chatId, `Попробуй завалить босса качалки\nЕго ХП - ${boss[chatId]}\nТвоё оружие - ${weapon[chatId]}`, KeyboardgameOption);
+    return bot.sendMessage(chatId, `Попробуй завалить босса качалки\nЕго ХП - ${boss[chatId]}\nТвоё оружие - ${weapon[chatId]}\nУрон - ${dmg[chatId]}`, KeyboardgameOption);
 }
 function Random(min, max){
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function CalculateDMG(base, weapon){
+    let wpn = Arsenal.find(u => u.Name == weapon)
+    //console.log(wpn);
+    return wpn.damage * base;
 }
 
 
@@ -97,7 +105,9 @@ const start = () => {
                 }
             });
         } */
-        return bot.sendMessage(chatId, 'Я не совсем понял что ты хочешь от меня')
+        else{
+            bot.sendMessage(chatId, 'Я не совсем понял что ты хочешь от меня')
+        }
         //await bot.sendMessage(chatId, `You say me: ${text}`)
 
     })
@@ -142,16 +152,16 @@ const start = () => {
                 async(err, data) =>{
                     if(err) console.log(err);
                     else{
-                        hit[chatId] = Random(9, 16)
-                        if(hit[chatId] >= boss[chatId]){
+                        //hit[chatId] = Random(9, 16)
+                        if(dmg[chatId] >= boss[chatId]){
                             data.XP += Random(10,21);
                             data.Killcount += 1;
                             await data.save();
-                            return bot.sendMessage(chatId, `Чел, ты его грохнул! Твой удар снёс ему: ${hit[chatId]}ХП`, againOption);
+                            return bot.sendMessage(chatId, `Чел, ты его грохнул при помощи ${weapon[chatId]}`, againOption);
                         }
-                        if(hit[chatId] < boss[chatId]){
+                        if(dmg[chatId] < boss[chatId]){
                             await data.save();
-                            return bot.sendMessage(chatId, `Ты умер, Босс выжил после твоей тычки в ${hit[chatId]}ХП`, againOption);
+                            return bot.sendMessage(chatId, `Ты умер`, againOption);
                         }
                     }
                 }
