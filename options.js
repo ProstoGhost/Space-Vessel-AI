@@ -24,5 +24,14 @@ module.exports = {
                 [{text: "Отступить", callback_data: '/stop'}],
             ]
         })
+    },
+    replaceOption:{
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: 'Забрать и экипировать', callback_data: '/replace'}],
+                [{text: 'Оставить и начать новое сражение', callback_data: '/again'}],
+                [{text: 'Оставить и закончить бой', callback_data: '/stop'}],
+            ]
+        })
     }
 }

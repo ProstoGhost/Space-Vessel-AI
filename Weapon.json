@@ -1,12 +1,18 @@
 [
     {
-        "id": 1,
+        "id": 0,
         "Name": "EL Glock 220W",
-        "damage": 1.5
+        "base": 5,
+        "damage": 1,
+        "critc": 50,
+        "chance": 100
     },
     {
-        "id": 2,
+        "id": 1,
         "Name": "AK DC-105A",
-        "damage": 1.7
+        "base": 7,
+        "damage": 1,
+        "critc": 100,
+        "chance": 10
     }
 ]
