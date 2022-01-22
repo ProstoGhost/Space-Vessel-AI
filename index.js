@@ -7,41 +7,45 @@ mongoose.connect("mongodb://localhost:27017/Telegram",{
     useUnifiedTopology: true
 });
 
+const {againOption, KeyboardgameOption, replaceOption, LocationOption} = require('./options')
+
 const Profile = require('./src/Profile')
 const Arsenal = require('./Weapon.json');
+const Location = require('./location.json');
 
 
 const bot = new TelegramAPI(process.env.TOKEN,{polling: true})
 const chats = {}
-const boss = {}
-const game = {}
+const boss = {} //текущий моб
+const game = {} // какая игра выбрана
 const hit = {}
-const weapon = {}
-const dmg = {}
-const drop = {}
-const {gameOption, againOption, KeyboardgameOption, replaceOption} = require('./options')
+const weapon = {} // оружие игрока
+const dmg = {} // урон
+const drop = {} // то что выпало
+const Place = {} //локация для боя
 
-const startGame = async (chatId, msgid) => {
-    const randomNumber = Math.floor(Math.random() * 10)
-    chats[chatId] = randomNumber;
-    game[chatId] = 1
-    //await bot.deleteMessage(chatId, msgid);
-    return bot.sendMessage(chatId, 'попробуй угадай число которое я загадал, оно от 0 до 9', gameOption)
-    //return bot.sendMessage(chatId, 'пробуй', gameOption)
-}
-const BossFight = async (chatId, msgid) => {
-    boss[chatId] = Random(14, 20);
-    game[chatId] = 2
-    dmg[chatId] = CalculateDMG(Random(9, 11), weapon[chatId])
-    //await bot.deleteMessage(chatId, msgid);
-    return bot.sendMessage(chatId, `Попробуй завалить босса качалки\nЕго ХП - ${boss[chatId]}\nТвоё оружие - ${weapon[chatId]}\nУрон - ${dmg[chatId]}`, KeyboardgameOption);
-}
+
 function Random(min, max){
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
 function CalculateDMG(base, weapon){
     let wpn = Arsenal.find(u => u.Name == weapon)
     return Math.floor(wpn.damage * base + wpn.base);
+}
+
+function GenerateBoss(route){
+    let mbl = Location[route].MobList.List;
+    return Location[route].MobList.List[Random(0, mbl.length-1)];
+
+}
+
+
+const BossFight = async (chatId) => {
+    boss[chatId] = GenerateBoss(Place[chatId])
+    dmg[chatId] = CalculateDMG(Random(9, 11), weapon[chatId])
+    //await bot.deleteMessage(chatId, msgid);
+    return bot.sendMessage(chatId, `Попробуй завалить босса качалки\nЕго ХП - ${boss[chatId]}\nТвоё оружие - ${weapon[chatId]}\nУрон - ${dmg[chatId]}`, KeyboardgameOption);
 }
 
 
@@ -49,7 +53,6 @@ const start = () => {
     bot.setMyCommands([
         {command: '/start', description: "Приветствие"},
         {command: '/info', description: "краткий курс что тут происходит"},
-        {command: '/game', description: "Загадка Жака Фреско"},
         {command: '/boss', description: "Попробуй одолеть босса качалки"}
 
     ])
@@ -63,10 +66,6 @@ const start = () => {
         }
         if(text === "/info"){
             return bot.sendMessage(chatId, `Это бот который поможет тебе скрасить немного времени и он достаточно прост для освоения`)
-        }
-        if(text === '/game'){
-            return startGame(chatId, msgid);
-            //return bot.deleteMessage(chatId, msgid);
         }
         if(text === '/boss'){
             await Profile.findOne(
@@ -86,11 +85,13 @@ const start = () => {
                         await nu.save(function (err) {
                             if (err) return console.error(err);
                         });
-                        return BossFight(chatId, msgid);
+                        return bot.sendMessage(chatId, `Choose Location:`, LocationOption)
+                        //return BossFight(chatId, msgid);
                     }
                     else{
                         weapon[chatId] = data.Weapon;
-                        return BossFight(chatId, msgid);
+                        return bot.sendMessage(chatId, `Choose Location:`, LocationOption)
+                        //return BossFight(chatId, msgid);
                     }
                 }
             ).clone().catch(function(err){ console.log(err)})
@@ -108,33 +109,22 @@ const start = () => {
         const chatId = msg.message.chat.id;
         const msgid = msg.message.message_id;
         //bot.sendMessage(chatId, `You choice: ${data}`)
-        if(data === '/again' & game[chatId] != 0){
-            if(game[chatId] === 1){
-                return startGame(chatId, msgid);
-            }
-            if(game[chatId] === 2){
-                return BossFight(chatId, msgid);
-            }
+        if(data === '/again'){
+            return BossFight(chatId, msgid);
+
             //return bot.deleteMessage(chatId, msgid);
         }
         if(data === '/stop'){
-            game[chatId] = 0;
             //await bot.deleteMessage(chatId, msgid);
             return bot.sendMessage(chatId, 'Хорошо, давай пока закончим на этом');
         }
-        if(data == chats[chatId]){
-            return bot.editMessageText(`Ты угадал число которое я загадал: ${chats[chatId]}`,{
-                chat_id: chatId,
-                message_id: msgid,
-                reply_markup: againOption.reply_markup
-            })
-        }
-        if(data != chats[chatId] & game[chatId] === 1){
-            return bot.editMessageText(`Я загадывал число: ${chats[chatId]}`,{
-                chat_id: chatId,
-                message_id: msgid,
-                reply_markup: againOption.reply_markup
-            })
+        if(data.startsWith('/preparation')){
+            //let test = Location.LocationList[data[data.length-1]]
+            //console.log(Location[test].DifficultyFactor)
+            let place = Location.LocationList[data[data.length-1]]
+            Place[chatId] = Location[place].Name
+            await bot.sendMessage(chatId,`You have chosen a location ${Location.LocationList[data[data.length-1]]}`)
+            return BossFight(chatId)
         }
         if(data === '/hit' & game[chatId] === 2){
             //await bot.deleteMessage(chatId, msgid);

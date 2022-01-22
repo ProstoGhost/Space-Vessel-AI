@@ -1,0 +1,63 @@
+{
+    "LocationList": ["Shipwreck", "Meadows"],
+    "Shipwreck": {
+        "Name": "Shipwreck",
+        "DifficultyFactor": 1,
+        "WeaponDropName": "AK DC-105A",
+        "chance": 30,
+        "MobList":{
+            "List": ["Кабанчик 'метающийся'", "Волк 'Цирковой'", "Псина 'Прямая'"],
+            "Кабанчик 'метающийся'" : {
+                "id": 0,
+                "MinHP": 10,
+                "MaxHP": 15,
+                "MinDMG": 0,
+                "MaxDMG": 3
+            },
+            "Волк 'Цирковой'" : {
+                "id": 1,
+                "MinHP": 9,
+                "MaxHP": 14,
+                "MinDMG": 1,
+                "MaxDMG": 4
+            },
+            "Псина 'Прямая'" : {
+                "id": 2,
+                "MinHP": 10,
+                "MaxHP": 15,
+                "MinDMG": 0,
+                "MaxDMG": 3
+            }
+        }
+    },
+    "Meadows":{
+        "Name": "Meadows",
+        "DifficultyFactor": 1,
+        "WeaponDropName": "AK DC-105A",
+        "chance": 100,
+        "MobList":{
+            "List": ["Кабанчик 'метающийся'", "Волк 'Цирковой'", "Псина 'Прямая'"],
+            "Кабанчик 'метающийся'" : {
+                "id": 0,
+                "MinHP": 10,
+                "MaxHP": 15,
+                "MinDMG": 0,
+                "MaxDMG": 3
+            },
+            "Волк 'Цирковой'" : {
+                "id": 1,
+                "MinHP": 9,
+                "MaxHP": 14,
+                "MinDMG": 1,
+                "MaxDMG": 4
+            },
+            "Псина 'Прямая'" : {
+                "id": 2,
+                "MinHP": 10,
+                "MaxHP": 15,
+                "MinDMG": 0,
+                "MaxDMG": 3
+            }
+        }
+    }
+}
