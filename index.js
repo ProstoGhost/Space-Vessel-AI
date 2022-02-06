@@ -7,7 +7,7 @@ mongoose.connect("mongodb://localhost:27017/Telegram",{
     useUnifiedTopology: true
 });
 
-const {againOption, KeyboardgameOption, replaceOption, LocationOption} = require('./options')
+const {againOption, KeyboardgameOption, ReplaceOption, LocationOption} = require('./options')
 
 const Profile = require('./src/Profile')
 const Arsenal = require('./Weapon.json');
@@ -16,7 +16,8 @@ const Location = require('./location.json');
 
 const bot = new TelegramAPI(process.env.TOKEN,{polling: true})
 const chats = {}
-const boss = {} //текущий моб
+const boss = {} //хп босса
+const BossName = {} //имя моба
 const game = {} // какая игра выбрана
 const hit = {}
 const weapon = {} // оружие игрока
@@ -42,10 +43,12 @@ function GenerateBoss(route){
 
 
 const BossFight = async (chatId) => {
-    boss[chatId] = GenerateBoss(Place[chatId])
+    BossName[chatId] = GenerateBoss(Place[chatId])
+    let HP = Location[Place[chatId]].MobList[BossName[chatId]]
+    boss[chatId] = Random(HP.MinHP, HP.MaxHP)
     dmg[chatId] = CalculateDMG(Random(9, 11), weapon[chatId])
     //await bot.deleteMessage(chatId, msgid);
-    return bot.sendMessage(chatId, `Попробуй завалить босса качалки\nЕго ХП - ${boss[chatId]}\nТвоё оружие - ${weapon[chatId]}\nУрон - ${dmg[chatId]}`, KeyboardgameOption);
+    return bot.sendMessage(chatId, `Попробуй завалить: ${BossName[chatId]}\nЕго ХП - ${boss[chatId]}\nТвоё оружие - ${weapon[chatId]}\nУрон - ${dmg[chatId]}`, KeyboardgameOption);
 }
 
 
@@ -53,7 +56,7 @@ const start = () => {
     bot.setMyCommands([
         {command: '/start', description: "Приветствие"},
         {command: '/info', description: "краткий курс что тут происходит"},
-        {command: '/boss', description: "Попробуй одолеть босса качалки"}
+        {command: '/boss', description: "Попробуй одолеть моба"}
 
     ])
     
@@ -126,7 +129,7 @@ const start = () => {
             await bot.sendMessage(chatId,`You have chosen a location ${Location.LocationList[data[data.length-1]]}`)
             return BossFight(chatId)
         }
-        if(data === '/hit' & game[chatId] === 2){
+        if(data === '/hit'){
             //await bot.deleteMessage(chatId, msgid);
             await Profile.findOne(
                 {ID : chatId},
@@ -140,7 +143,7 @@ const start = () => {
                             await data.save();
                             if(Arsenal.find(u => u.id === 1).chance <= Random(0,100) & Arsenal.find(p => p.id === 1 ).Name != weapon[chatId]){
                                 drop[chatId] = Arsenal.find(u => u.id === 1).Name
-                                return bot.sendMessage(chatId, `Ты убил босса и с него выпала новая пуха:\n ${Arsenal.find(u => u.id === 1).Name}`, replaceOption)
+                                return bot.sendMessage(chatId, `Ты убил босса и с него выпала новая пуха:\n ${Arsenal.find(u => u.id === 1).Name}`, ReplaceOption)
                             }
                             else{
                                 return bot.sendMessage(chatId, `Чел, ты его грохнул при помощи ${weapon[chatId]}`, againOption);
